@@ -29,7 +29,7 @@ EW100_DVBT = tuner_dvbt.o tuner_packet.o tuner_spibus.o tuner_common.o
 EW100_ISDBT = tuner_isdbt.o tuner_packet.o tuner_spibus.o tuner_common.o
 
 #FFMpeg & Tuner integration test
-EXAMPLE = tuner_avio_impl tuner_packet tuner_common ringbuf allocation ffimpl generic_io mmdbg threadqueue
+EXAMPLE = tuner_avio_impl tuner_packet tuner_common ringbuf allocation ffimpl generic_io mmdbg threadqueue file_io
 OBJS=$(addsuffix .o,$(EXAMPLE))
 
 FFEXAMPLE = ffexample

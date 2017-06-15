@@ -65,6 +65,7 @@ int thread_queue_init(struct threadqueue *queue)
         pthread_cond_destroy(&queue->cond);
         return ret;
     }
+	queue->stop = 0;
 	//printf("[%s:%s():%d] %p %ld\n", __FILE__, __FUNCTION__, __LINE__,  queue, queue->length);
 
     return 0;
@@ -124,7 +125,13 @@ int thread_queue_get(struct threadqueue *queue, const struct timespec *timeout, 
     pthread_mutex_lock(&queue->mutex);
     /* Will wait until awakened by a signal or broadcast */
     while (queue->first == NULL && ret != ETIMEDOUT) {  //Need to loop to handle spurious wakeups
+		if (queue->stop == 1) {
+			printf("[%s:%s():%d] inform stop\n", __FILE__, __FUNCTION__, __LINE__);
+			pthread_mutex_unlock(&queue->mutex);
+			return -2;
+		}
         if (timeout) {
+			printf("[%s:%s():%d] %ld wait timeout\n", __FILE__, __FUNCTION__, __LINE__,	queue->length);
             ret = pthread_cond_timedwait(&queue->cond, &queue->mutex, &abstimeout);
         } else {
             pthread_cond_wait(&queue->cond, &queue->mutex);
@@ -202,3 +209,9 @@ long thread_queue_length(struct threadqueue *queue)
 
 }
 
+void thread_queue_set_stop(struct threadqueue *queue)
+{
+	pthread_mutex_lock(&queue->mutex);
+	queue->stop = 1;
+	pthread_mutex_unlock(&queue->mutex);
+}

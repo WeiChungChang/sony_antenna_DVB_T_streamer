@@ -73,6 +73,11 @@ struct threadqueue {
  * Length of the queue, never set this, never read this.
  * Use #threadqueue_length to read it.
  */
+		int stop;
+/**
+ * Length of the queue, never set this, never read this.
+ * Use #threadqueue_length to read it.
+ */
         long length;
 /**
  * Mutex for the queue, never touch.

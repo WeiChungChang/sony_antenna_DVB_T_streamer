@@ -1,11 +1,28 @@
 #include "generic_io.h"
+#include <sys/time.h>
 
 void* generic_input_thread_loop(void *param) 
 {
-	Allocation   *allocation = NULL;
-	input_param   *iparam    = (input_param*)param;
-	atom_v        *stop      = &(iparam->stop);
+	Allocation   *allocation          = NULL;
+	input_param   *iparam             = (input_param*)param;
+	atom_v        *stop               = &(iparam->stop);
+#if 0
+	struct        timespec abstimeout = {0};
 	
+    if (iparam->timeout) {
+		struct timespec *timeout = iparam->timeout;
+        struct timeval now;
+
+        gettimeofday(&now, NULL);
+        abstimeout.tv_sec = now.tv_sec + timeout->tv_sec;
+        abstimeout.tv_nsec = (now.tv_usec * 1000) + timeout->tv_nsec;
+        if (abstimeout.tv_nsec >= 1000000000) {
+            abstimeout.tv_sec++;
+            abstimeout.tv_nsec -= 1000000000;
+        }
+    }
+#endif
+
 	allocation = allocate(iparam->allocator);
 	if (!allocation) {
 		/*cannot get new allocation!*/

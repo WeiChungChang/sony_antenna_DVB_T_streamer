@@ -15,6 +15,7 @@ typedef struct _input_param {
 	threadqueue     *dataQueue;
 
 	atom_v			stop;
+	struct timespec *timeout;
 } input_param;
 
 typedef struct _output_param {

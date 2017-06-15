@@ -19,6 +19,8 @@
 #include "generic_io.h"
 #include "ffimpl.h"
 
+#include "file_io.h"
+
 #define DEBUG 1
 //#define DEBUG 0
 
@@ -94,6 +96,9 @@ exit:
 	free_dbg(output);
 }
 
+#define MAX_PKT_SZ 1024*256
+static int total_pkt = 0;
+
 static int ReceiveSonyTSPacket(TUNER_DRIVER_CONTROLLER_T *pController, int8_t *dist, int max)
 {
 	assert (pController != NULL);
@@ -134,6 +139,13 @@ static int ReceiveSonyTSPacket(TUNER_DRIVER_CONTROLLER_T *pController, int8_t *d
 						offset += TS_PKT_SZ;
 					}
 				}
+				total_pkt += max_pkt;
+#ifdef MAX_PKT_SZ
+				if (total_pkt >= MAX_PKT_SZ) {
+					printf("[%s:%s():%d] have read the max pkt!\n", __FILE__, __FUNCTION__, __LINE__);
+					return 0;
+				}
+#endif
 				break;
 			}
 		}
@@ -190,6 +202,7 @@ int SetupDVBTunner(TUNER_DRIVER_CONTROLLER_T *controller, uint32_t freq, TUNER_D
 		return -1;
 	}
 
+	total_pkt = 0;
 	return 0;
 }
 
@@ -245,7 +258,7 @@ int main2(int argc, char *argv[])
 	memory_dbg_finalize();
 }
 
-int main(int argc, char *argv[])
+int main_free2Air(int argc, char *argv[])
 {
 	pthread_t    testThread              = {0}; 
 	input_param  inParam                 = {0};
@@ -328,5 +341,65 @@ exit:
 		
 	return ret;
 }
+
+int main(int argc, char *argv[])
+{
+	pthread_t    testThread              = {0}; 
+	input_param  inParam                 = {0};
+	Allocator    allocator               = {0};
+	threadqueue  dataQueue               = {0};
+	TUNER_DRIVER_CONTROLLER_T controller = {0};
+	int ret;
+
+	if (argc < 2) {
+		printf("[%s:%s():%d] #param is less than requirement!\n", __FILE__, __FUNCTION__, __LINE__);
+		return -1;
+	}
+
+	memory_dbg_init();
+
+	/*stap 1: init allocator*/
+	init_allocator(&allocator, 32/*INIT_ALLOCATOR_NUM*/);
+
+	/*step 2: init buffer queue*/
+	thread_queue_init(&dataQueue);
+
+	/*step 3: init input param*/
+	inParam.read_data = ReceiveSonyTSPacketWrapper;
+	inParam.opData    = (void*)(&controller); /*not ready yet...*/
+	inParam.allocator = &allocator;
+	inParam.dataQueue = &dataQueue;
+	INIT_ATOM_V(&(inParam.stop), 0);
+
+	/*step 6: prepare tuner input*/
+	if(SetupDVBTunner(&controller, TEST_FREQ, TEST_BANDWIDTH, TEST_DVB_SYSTEM) < 0) {
+		printf("[%s:%s():%d] SetupDVBTunner failed!\n", __FILE__, __FUNCTION__, __LINE__);
+		ret = ERROR_GENERAL;
+		goto exit;
+	}
+
+	/*step 7: launch reading thread*/
+	ret = pthread_create(&testThread, NULL, generic_input_thread_loop, (void *)(&inParam));
+	if (ret) {
+		fprintf(stderr, "[%s:%s():%d]: create thread failed, ret = %d\n", __FILE__, __FUNCTION__, __LINE__, ret);
+	}
+
+	/*step 8: test the result*/
+	int r = file_store_loop (argv[1], &allocator, &dataQueue);
+
+	printf("[%s:%s():%d]: stop reading thread!!!!!!\n", __FILE__, __FUNCTION__, __LINE__);
+	SET(&(inParam.stop), 1);
+
+	/*wait for complete*/
+	pthread_join(testThread, NULL);
+exit:
+
+	/*do house keeping*/
+	terminate_allocator(&allocator);
+	memory_dbg_finalize();
+		
+	return ret;
+}
+
 
 

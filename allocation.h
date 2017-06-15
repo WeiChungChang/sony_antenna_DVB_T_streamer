@@ -36,6 +36,7 @@
 #define FULL(pAllocation)                   (((pAllocation)->wp) == CAPACITY(pAllocation))
 #define EMPTY(pAllocation)                   (((pAllocation)->rp) == ((pAllocation)->wp))
 #define CONFIRM_WRITE(pAllocation, sz)      (((pAllocation)->wp) += (sz))
+#define CONFIRM_READ(pAllocation, sz)      (((pAllocation)->rp) += (sz))
 #define COPY_FROM(pAllocation/*source*/, source/*source*/, size)  \
 	({	\
 		memcpy(WRITE_POS((pAllocation)), (source), (size));	\
