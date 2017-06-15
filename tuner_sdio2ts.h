@@ -1,0 +1,50 @@
+/* Copyright 2016-2017 Noovo Crop.
+ * This software it the property of Noovo Crop.
+ * You have to accept the terms in the license file before use
+ *
+ * Created by william.ho@noovo.co 
+ *
+ * Copyright (c) 2016-2017 Noovo Crop.  All rights reserved
+ */
+
+#ifndef __TUNER_SDIO2TS_H__
+#define __TUNER_SDIO2TS_H__
+/*------------------------------------------------------------------------------
+ Includes
+ ------------------------------------------------------------------------------*/
+#include <stdio.h>
+#include <stdlib.h>
+#include "tuner_common.h"
+#include "sony_integ_dvbt_t2.h"
+#include "sony_tunerdemod_dvbt_monitor.h"
+#include "sony_tunerdemod_dvbt2_monitor.h"
+#include "sony_tunerdemod.h"
+#include "sony_tunerdemod_dvbt.h"
+#include "sony_dvbt.h"
+#include "cxd288x_sdio.h"
+
+/*------------------------------------------------------------------------------
+ Defines
+ ------------------------------------------------------------------------------*/
+/* Number of TS packets to read. */
+#define READ_TS_PACKET_MAX (100000)
+#define TS_FILE_NAME "output.ts"
+#define TUNE_CFREQ_KHZ 532988 //That should be Taiwan Public TV.
+#define CMD53_BLOCKSIZE  (188 * 2)
+//#define TUNE_CFREQ_KHZ 477000 //That should be Euro DTV.
+
+/*------------------------------------------------------------------------------
+ Variables
+ ------------------------------------------------------------------------------*/
+static FILE * g_outputFile;
+static uint8_t * g_pTSReadData;
+static uint32_t g_readTSDataSize;
+
+/*------------------------------------------------------------------------------
+ Functions
+ ------------------------------------------------------------------------------*/
+static sony_result_t InitializeTSRead(TUNER_DRIVER_CONTROLLER_T *pDriver);
+static sony_result_t FinalizeTSRead();
+static sony_result_t PrepareForChannel(TUNER_DRIVER_CONTROLLER_T *pDriver);
+
+#endif //__TUNER_SPI2TS_H__
